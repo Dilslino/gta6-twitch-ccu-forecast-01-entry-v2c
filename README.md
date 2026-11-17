@@ -24,7 +24,9 @@ against its own pre-day level. The target's six nearest neighbours in
 that (standardised, population mean/sd) 2-D space lend their release-day
 curves: for each hour h the median of the neighbours' log(viewers_h /
 anchor) is the median log-ratio, and the IQR of those log-ratios (as a
-normal sigma, IQR / 1.349, floored at 0.08) is the spread. The forecast
+normal sigma, 0.7 * IQR / 1.349, floored at 0.08) is the spread. The 0.7
+calibrates the neighbour spread, which otherwise runs 2-4x the realised
+median error in hours 7-24. The forecast
 is anchor * exp(median + z_tau * sigma).
 
 Launch size drives the evening peak almost entirely (corr(log p1,
@@ -40,7 +42,7 @@ the entry falls back to the house baseline (flat hour-1, spread
 | model | mean | p00 | p01 | p02 | p03 |
 |---|---|---|---|---|---|
 | V1 (pre-5h anchor, k=8) | 0.1813 | 0.2354 | 0.1694 | 0.1242 | 0.1962 |
-| **L1k6 (this entry)** | **0.1519** | 0.1574 | 0.0999 | 0.1391 | 0.2111 |
+| **L1k6 (this entry)** | **0.1396** | 0.1366 | 0.0896 | 0.1262 | 0.2062 |
 
 House baseline: 0.3871. L1k6 also beats V1 on leave-one-out over the 37
 comparables (all 0.4534 vs 0.5087; p1>=10k 0.3055 vs 0.3442;

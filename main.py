@@ -11,7 +11,11 @@ p1 is its hour-1 viewers and d = log(p1 / anchor). Neighbours are the
 k = 6 comparables closest to the case in standardised [log p1, d] space
 (population mean / sd over the usable comparables). For each hour h the
 forecast is the median of the neighbours' log(viewers_h / anchor); the
-spread is sigma = IQR / 1.349 of those log-ratios, floored at 0.08.
+spread is sigma = 0.7 * IQR / 1.349 of those log-ratios, floored at 0.08. The 0.7 factor
+calibrates the neighbour spread: the IQR across six selected neighbours overstates how far a
+new game's curve sits from their median (on the four practice cases the implied sigma runs
+2-4x the realised median error in hours 7-24), so the raw IQR is shrunk toward the
+sampling scale of the median.
 Quantiles: anchor * exp(median + z_tau * sigma).
 
 Fallbacks (never crash): if the case anchor is unreadable or fewer than
@@ -40,6 +44,12 @@ Z = [-1.645, -0.674, 0.0, 0.674, 1.645]
 K_NEIGHBOURS = 6
 MIN_USABLE = 4
 SIGMA_FLOOR = 0.08
+# Neighbour-IQR calibration: the raw IQR overstates the predictive spread
+# (see module docstring); 0.7 keeps the 90% coverage near-honest on practice
+# while capturing most of the pinball gain. The practice-optimal factor is
+# ~0.6; 0.7 is the conservative choice inside the flat optimum, so the band
+# stays honest if the final launch surprises like p03 did.
+SIGMA_SCALE = 0.7
 BASE_SPREAD = 0.15
 
 
@@ -82,11 +92,11 @@ def percentile_linear(values, q):
 
 
 def spread_of(values):
-    """IQR / 1.349, floored; degenerate for a single value."""
+    """Calibrated IQR / 1.349, floored; degenerate for a single value."""
     if len(values) < 2:
         return SIGMA_FLOOR
     iqr = percentile_linear(values, 0.75) - percentile_linear(values, 0.25)
-    return max(SIGMA_FLOOR, iqr / 1.349)
+    return max(SIGMA_FLOOR, SIGMA_SCALE * iqr / 1.349)
 
 
 def hourly_lookup(rows):
